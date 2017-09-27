@@ -1,0 +1,147 @@
+<!DOCTYPE html >
+<html>
+<head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+    <title>Using MySQL and PHP with Google Maps</title>
+    <style>
+        /* Always set the map height explicitly to define the size of the div
+         * element that contains the map. */
+        #map {
+
+            height: 80%;
+            width: 70%;
+            float:left;
+          margin: 30px 30px 30px 30px;
+            border: 5px solid darkkhaki;
+
+        }
+        /* Optional: Makes the sample page fill the window. */
+        html, body {
+
+            height: 100%;
+            margin: 0;
+     }
+    .title{
+        padding-top: 40px;
+        position:relative;
+        text-align:center;
+    }
+
+
+    </style>
+</head>
+
+<body>
+
+<script>
+
+
+    function initMap() {
+        var map = new google.maps.Map(document.getElementById('map'), {
+            center: new google.maps.LatLng(45.50884, -73.58781),
+            zoom: 10
+
+        });
+        var infoWindow = new google.maps.InfoWindow;
+
+        downloadUrl('maps_xml.php', function(data) {
+            var xml = data.responseXML;
+            var markers = xml.documentElement.getElementsByTagName('marker');
+            Array.prototype.forEach.call(markers, function(markerElem) {
+                var name = markerElem.getAttribute('name');
+                var address = markerElem.getAttribute('address');
+                var type = markerElem.getAttribute('type');
+                var point = new google.maps.LatLng(
+                    parseFloat(markerElem.getAttribute('lat')),
+                    parseFloat(markerElem.getAttribute('lng')));
+                var getpath=markerElem.getAttribute('path');// pour obtenir le path pour l image
+                var infowincontent = document.createElement('div');
+
+                var textprix= document.createElement('strong');
+                textprix.style.color='#f12b4a';
+                textprix.fontWeight = "bolder";
+                textprix.fontSize='900px';
+                textprix.textContent=type + '$ '; // on va changer le nom par prix
+                infowincontent.appendChild(textprix);
+                infowincontent.appendChild(document.createElement('br'));
+
+                var strong = document.createElement('strong');
+                strong.textContent = name;
+                infowincontent.appendChild(strong);
+                infowincontent.appendChild(document.createElement('br'));
+
+                var text = document.createElement('text');
+                text.textContent = address;
+                infowincontent.appendChild(text);
+                infowincontent.appendChild(document.createElement('br'));
+
+                var image= document.createElement('img');
+                image.style.height='200px';
+                image.style.width='200px';
+                image.src=getpath;
+
+                infowincontent.appendChild(image);
+
+                var icon={
+                    url:'loge2.png',
+                    scaledSize:new google.maps.Size(35,35),
+                    origin: new google.maps.Point(0,0),
+                    anchor: new google.maps.Point(0,0)
+                }
+                var marker = new google.maps.Marker({
+                    map: map,
+                    position: point,
+                    //label: icon.label
+                    icon:icon
+                });
+                marker.addListener('mouseout', function() {
+                        infoWindow.close(map,marker);
+                });
+                marker.addListener('mouseover', function() {
+                    infoWindow.setContent(infowincontent);
+                    infoWindow.open(map, marker);
+                });
+                marker.addListener('click',function() {
+                    infoWindow.close(map, marker);
+                    document.getElementById("message").innerHTML = "<style>label{ color:darkblue} img{ width: 400px; height: 400px }</style><label >Propietaire :</label> <strong>" + name + "</strong>" + "<br>" +
+                        "<label>Adresse :</label> <strong>" + address + "</strong><br><img src=" + getpath + " >";
+
+                });
+            });
+        });
+    }
+
+
+    function downloadUrl(url, callback) {
+        var request = window.ActiveXObject ?
+            new ActiveXObject('Microsoft.XMLHTTP') :
+            new XMLHttpRequest;
+
+        request.onreadystatechange = function() {
+            if (request.readyState == 4) {
+                request.onreadystatechange = doNothing;
+                callback(request, request.status);
+            }
+        };
+
+        request.open('GET', url, true);
+        request.send(null);
+    }
+
+    function doNothing() {}
+</script>
+<script defer async
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCTBYRZ3zAUQ81jl-x8Y8J14WqVIP4Es9g&callback=initMap">
+</script>
+
+    <div id="map"></div>
+<div class="title">
+ <span>Aperçu :</span>
+</div>
+<div id="message" class="message">
+
+</div>
+
+</body>
+</html>
